@@ -121,3 +121,87 @@ a {
 a:hover, a:focus, a:active {
   color: #824027;
 }
+
+.project-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #dee2e6;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.project-card:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  transform: translateY(-3px);
+}
+
+.project-card-body {
+  flex: 1;
+  padding: 1.5rem;
+}
+
+.project-title {
+  font-family: 'Saira Extra Condensed', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #343a40;
+  margin-bottom: 0.75rem;
+}
+
+.project-desc {
+  color: #868e96;
+  font-size: 0.95rem;
+  margin-bottom: 0;
+}
+
+.project-card-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #dee2e6;
+  background-color: #f8f9fa;
+}
+
+.project-link {
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05rem;
+  color: #BD5D38;
+}
+
+.project-link:hover {
+  color: #824027;
+  text-decoration: none;
+}
+
+.project-group-toggle {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  background: none;
+  border: none;
+  border-bottom: 2px solid #BD5D38;
+  padding: 0.5rem 0;
+  font-family: 'Saira Extra Condensed', sans-serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #343a40;
+  letter-spacing: 0.05rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.project-group-toggle:focus {
+  outline: none;
+}
+
+.project-group-toggle .toggle-icon {
+  color: #BD5D38;
+  font-size: 1rem;
+  transition: transform 0.25s ease;
+}
+
+.project-group-toggle[aria-expanded="false"] .toggle-icon {
+  transform: rotate(-90deg);
+}

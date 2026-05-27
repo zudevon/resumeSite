@@ -1,7 +1,7 @@
 (function($) {
   "use strict";
 
-  var sections = ['about', 'experience', 'education', 'skills', 'interests', 'awards'];
+  var sections = ['about', 'experience', 'education', 'skills', 'interests', 'awards', 'projects'];
 
   function showPage(id) {
     if (sections.indexOf(id) === -1) id = 'about';
