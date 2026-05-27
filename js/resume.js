@@ -1,28 +1,44 @@
 (function($) {
-  "use strict"; // Start of use strict
+  "use strict";
 
-  // Smooth scrolling using jQuery easing
-  $('a.js-scroll-trigger[href*="#"]:not([href="#"])').click(function() {
-    if (location.pathname.replace(/^\//, '') == this.pathname.replace(/^\//, '') && location.hostname == this.hostname) {
-      var target = $(this.hash);
-      target = target.length ? target : $('[name=' + this.hash.slice(1) + ']');
-      if (target.length) {
-        $('html, body').animate({
-          scrollTop: (target.offset().top)
-        }, 1000, "easeInOutExpo");
-        return false;
+  var sections = ['about', 'experience', 'education', 'skills', 'interests', 'awards'];
+
+  function showPage(id) {
+    if (sections.indexOf(id) === -1) id = 'about';
+
+    sections.forEach(function(s) {
+      var $section = $('#' + s);
+      if (s === id) {
+        $section.removeClass('d-none');
+      } else {
+        $section.addClass('d-none');
       }
-    }
+    });
+
+    $('.js-page').each(function() {
+      var href = $(this).attr('href').replace('#', '');
+      $(this).toggleClass('active', href === id);
+    });
+
+    history.pushState(null, null, '#' + id);
+    window.scrollTo(0, 0);
+  }
+
+  $(document).ready(function() {
+    var initial = (window.location.hash || '#about').replace('#', '');
+    showPage(initial);
+
+    $(document).on('click', '.js-page', function(e) {
+      e.preventDefault();
+      var target = $(this).attr('href').replace('#', '');
+      showPage(target);
+      $('.navbar-collapse').collapse('hide');
+    });
+
+    $(window).on('popstate', function() {
+      var id = (window.location.hash || '#about').replace('#', '');
+      showPage(id);
+    });
   });
 
-  // Closes responsive menu when a scroll trigger link is clicked
-  $('.js-scroll-trigger').click(function() {
-    $('.navbar-collapse').collapse('hide');
-  });
-
-  // Activate scrollspy to add active class to navbar items on scroll
-  $('body').scrollspy({
-    target: '#sideNav'
-  });
-
-})(jQuery); // End of use strict
+})(jQuery);
