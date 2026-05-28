@@ -205,3 +205,22 @@ a:hover, a:focus, a:active {
 .project-group-toggle[aria-expanded="false"] .toggle-icon {
   transform: rotate(-90deg);
 }
+
+.skill-category {
+  margin-bottom: 1rem;
+}
+
+.skill-divider {
+  border-color: #dee2e6;
+  margin-top: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.skill-category .fa-ul {
+  margin-bottom: 0;
+}
+
+.skill-category .fa-ul li {
+  margin-bottom: 0.4rem;
+  color: #868e96;
+}
