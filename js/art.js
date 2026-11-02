@@ -402,12 +402,27 @@ window.Art = (function () {
 
   /* ───────────────────────── interior ───────────────────────── */
 
-  function drawInteriorFloor(ctx, x, y) {
+  function drawInteriorFloor(ctx, x, y, theme) {
     px(ctx, x, y, P["3"], T, T);
     px(ctx, x, y, P["2"], T, 1);
     px(ctx, x, y, P["2"], 1, T);
-    const h = hash(x, y);
-    if (h % 5 === 0) px(ctx, x + 8, y + 8, P["2"], 2, 2);
+
+    if (theme === "study") {
+      px(ctx, x + 8, y, P["2"], 1, T);
+      px(ctx, x, y + 8, P["2"], T, 1);
+    } else if (theme === "lab") {
+      px(ctx, x + 4, y + 4, P["2"], 8, 1);
+      px(ctx, x + 12, y + 4, P["2"], 1, 8);
+      px(ctx, x + 4, y + 12, P["2"], 1, 4);
+    } else if (theme === "lounge") {
+      px(ctx, x + 8, y + 8, P["2"], 4, 4);
+    } else if (theme === "guild") {
+      px(ctx, x + 4, y + 4, P["2"], 2, 1);
+      px(ctx, x + 10, y + 10, P["2"], 2, 1);
+    } else {
+      const h = hash(x, y);
+      if (h % 5 === 0) px(ctx, x + 8, y + 8, P["2"], 2, 2);
+    }
   }
 
   function drawInteriorWall(ctx, x, y) {
@@ -424,16 +439,38 @@ window.Art = (function () {
     px(ctx, x + 7, y + 8, P["4"], 2, 2);
   }
 
-  function drawRug(ctx, x, y, w, h) {
+  function drawRug(ctx, x, y, w, h, theme) {
     px(ctx, x, y, P["0"], w, h);
     px(ctx, x + 1, y + 1, P["2"], w - 2, h - 2);
     px(ctx, x + 2, y + 2, P["3"], w - 4, 1);
     px(ctx, x + 2, y + h - 3, P["3"], w - 4, 1);
-    for (let i = 0; i < 3; i++) {
-      const cx = x + w / 2;
-      const cy = y + h / 2;
-      px(ctx, cx - 8 + i * 2, cy + 4 - i * 4, P["3"], 16 - i * 4, 1);
-      px(ctx, cx - 8 + i * 2, cy - 4 + i * 4, P["3"], 16 - i * 4, 1);
+
+    const cx = x + Math.floor(w / 2);
+    const cy = y + Math.floor(h / 2);
+
+    if (theme === "guild") {
+      for (let yy = y + 6; yy < y + h - 3; yy += 6) px(ctx, x + 4, yy, P["3"], w - 8, 1);
+    } else if (theme === "study") {
+      for (let xx = x + 10; xx < x + w - 4; xx += 10) px(ctx, xx, y + 3, P["3"], 1, h - 6);
+      for (let yy = y + 7; yy < y + h - 3; yy += 7) px(ctx, x + 3, yy, P["3"], w - 6, 1);
+    } else if (theme === "lab") {
+      px(ctx, cx - 12, cy, P["3"], 24, 1);
+      px(ctx, cx, cy - 8, P["3"], 1, 16);
+      px(ctx, cx - 8, cy - 4, P["3"], 1, 8);
+      px(ctx, cx + 8, cy - 4, P["3"], 1, 8);
+      px(ctx, cx - 12, cy - 4, P["3"], 4, 1);
+      px(ctx, cx + 8, cy + 4, P["3"], 4, 1);
+    } else if (theme === "lounge") {
+      for (let xx = x + 8; xx < x + w - 4; xx += 10) {
+        for (let yy = y + 5; yy < y + h - 3; yy += 7) {
+          px(ctx, xx, yy, P["3"], 2, 2);
+        }
+      }
+    } else {
+      for (let i = 0; i < 3; i++) {
+        px(ctx, cx - 8 + i * 2, cy + 4 - i * 4, P["3"], 16 - i * 4, 1);
+        px(ctx, cx - 8 + i * 2, cy - 4 + i * 4, P["3"], 16 - i * 4, 1);
+      }
     }
   }
 
@@ -475,6 +512,199 @@ window.Art = (function () {
     px(ctx, x + 5, y + 4, P["2"], 6, 2);
   }
 
+  /* ───────────────────────── themed interior props ───────────────────────── */
+
+  function drawBed(ctx, x, y) {
+    px(ctx, x, y, P["0"], 32, 32);
+    px(ctx, x + 1, y + 1, P["1"], 30, 30);
+    px(ctx, x + 3, y + 3, P["3"], 26, 12);
+    px(ctx, x + 4, y + 4, P["4"], 10, 8);
+    px(ctx, x + 3, y + 16, P["2"], 26, 12);
+    px(ctx, x + 4, y + 17, P["3"], 24, 1);
+    px(ctx, x + 4, y + 26, P["3"], 24, 1);
+    px(ctx, x + 1, y + 30, P["1"], 30, 1);
+  }
+
+  function drawCabinet(ctx, x, y) {
+    px(ctx, x, y, P["0"], 32, 32);
+    px(ctx, x + 1, y + 1, P["1"], 30, 30);
+    px(ctx, x + 3, y + 3, P["3"], 12, 26);
+    px(ctx, x + 17, y + 3, P["3"], 12, 26);
+    px(ctx, x + 3, y + 16, P["2"], 12, 1);
+    px(ctx, x + 17, y + 16, P["2"], 12, 1);
+    px(ctx, x + 8, y + 14, P["2"], 2, 2);
+    px(ctx, x + 22, y + 14, P["2"], 2, 2);
+  }
+
+  function drawTV(ctx, x, y) {
+    px(ctx, x, y + 6, P["0"], 32, 26);
+    px(ctx, x + 2, y + 8, P["1"], 28, 22);
+    px(ctx, x + 4, y + 10, P["2"], 24, 14);
+    px(ctx, x + 6, y + 12, P["3"], 20, 1);
+    px(ctx, x + 6, y + 16, P["3"], 14, 1);
+    px(ctx, x + 12, y + 28, P["1"], 8, 4);
+  }
+
+  function drawServer(ctx, x, y, time) {
+    px(ctx, x, y, P["0"], 32, 32);
+    px(ctx, x + 1, y + 1, P["1"], 30, 30);
+
+    for (let r = 0; r < 4; r++) {
+      const yy = y + 4 + r * 7;
+      px(ctx, x + 4, yy, P["3"], 18, 4);
+      px(ctx, x + 6, yy + 1, P["2"], 14, 1);
+      px(ctx, x + 23, yy, P["2"], 3, 2);
+      px(ctx, x + 23, yy + 2, P["4"], 3, 2);
+    }
+
+    const on = Math.floor((time || 0) * 2) % 2;
+    px(ctx, x + 24, y + 5, P[on ? "4" : "2"], 2, 2);
+    px(ctx, x + 24, y + 19, P[on ? "2" : "4"], 2, 2);
+    px(ctx, x + 24, y + 26, P["3"], 2, 2);
+  }
+
+  function drawConsole(ctx, x, y) {
+    px(ctx, x, y, P["0"], 32, 24);
+    px(ctx, x + 1, y + 1, P["3"], 30, 22);
+    px(ctx, x + 3, y + 3, P["1"], 14, 10);
+    px(ctx, x + 4, y + 4, P["2"], 12, 8);
+    px(ctx, x + 5, y + 5, P["4"], 10, 1);
+    px(ctx, x + 5, y + 7, P["4"], 7, 1);
+    px(ctx, x + 19, y + 6, P["2"], 8, 8);
+    px(ctx, x + 20, y + 8, P["4"], 6, 1);
+    px(ctx, x + 20, y + 10, P["4"], 4, 1);
+    px(ctx, x + 3, y + 16, P["0"], 26, 4);
+    px(ctx, x + 4, y + 17, P["2"], 24, 2);
+  }
+
+  function drawCrate(ctx, x, y) {
+    px(ctx, x, y, P["0"], 16, 16);
+    px(ctx, x + 1, y + 1, P["1"], 14, 14);
+    px(ctx, x + 3, y + 3, P["3"], 10, 1);
+    px(ctx, x + 3, y + 12, P["3"], 10, 1);
+    px(ctx, x + 3, y + 3, P["3"], 1, 10);
+    px(ctx, x + 12, y + 3, P["3"], 1, 10);
+    px(ctx, x + 6, y + 6, P["2"], 4, 4);
+  }
+
+  function drawSofa(ctx, x, y) {
+    px(ctx, x, y + 6, P["0"], 48, 26);
+    px(ctx, x + 1, y + 7, P["1"], 46, 24);
+    px(ctx, x + 3, y + 3, P["2"], 42, 14);
+    px(ctx, x + 4, y + 4, P["3"], 40, 2);
+    px(ctx, x + 3, y + 18, P["2"], 20, 10);
+    px(ctx, x + 25, y + 18, P["2"], 20, 10);
+    px(ctx, x + 4, y + 19, P["3"], 18, 1);
+    px(ctx, x + 26, y + 19, P["3"], 18, 1);
+    px(ctx, x + 1, y + 10, P["1"], 4, 18);
+    px(ctx, x + 43, y + 10, P["1"], 4, 18);
+    px(ctx, x + 1, y + 28, P["0"], 46, 2);
+  }
+
+  function drawSkateboard(ctx, x, y) {
+    px(ctx, x + 6, y + 2, P["0"], 4, 26);
+    px(ctx, x + 7, y + 3, P["2"], 2, 24);
+    px(ctx, x + 4, y + 1, P["0"], 8, 3);
+    px(ctx, x + 4, y + 27, P["0"], 8, 3);
+    px(ctx, x + 5, y + 6, P["1"], 6, 3);
+    px(ctx, x + 5, y + 23, P["1"], 6, 3);
+    px(ctx, x + 3, y + 8, P["3"], 3, 3);
+    px(ctx, x + 10, y + 8, P["3"], 3, 3);
+    px(ctx, x + 3, y + 21, P["3"], 3, 3);
+    px(ctx, x + 10, y + 21, P["3"], 3, 3);
+  }
+
+  function drawGlobe(ctx, x, y) {
+    px(ctx, x + 3, y + 2, P["0"], 10, 9);
+    px(ctx, x + 4, y + 3, P["2"], 8, 7);
+    px(ctx, x + 5, y + 4, P["3"], 2, 5);
+    px(ctx, x + 7, y + 3, P["3"], 1, 7);
+    px(ctx, x + 9, y + 5, P["3"], 2, 3);
+    px(ctx, x + 7, y + 11, P["0"], 2, 3);
+    px(ctx, x + 5, y + 14, P["0"], 6, 2);
+  }
+
+  function drawLongTable(ctx, x, y, w) {
+    px(ctx, x, y + 4, P["0"], w, 6);
+    px(ctx, x + 1, y + 5, P["3"], w - 2, 4);
+    px(ctx, x + 3, y + 10, P["0"], 3, 6);
+    px(ctx, x + w - 6, y + 10, P["0"], 3, 6);
+  }
+
+  function drawBanner(ctx, x, y) {
+    px(ctx, x, y, P["0"], 24, 24);
+    px(ctx, x + 1, y + 1, P["2"], 22, 22);
+    px(ctx, x + 3, y + 3, P["4"], 18, 1);
+    px(ctx, x + 6, y + 9, P["4"], 2, 2);
+    px(ctx, x + 8, y + 11, P["4"], 6, 2);
+    px(ctx, x + 14, y + 9, P["4"], 2, 2);
+    px(ctx, x + 2, y + 21, P["3"], 4, 2);
+    px(ctx, x + 10, y + 21, P["3"], 4, 2);
+  }
+
+  function drawChalkboard(ctx, x, y, w, h) {
+    px(ctx, x, y, P["0"], w, h);
+    px(ctx, x + 2, y + 2, P["1"], w - 4, h - 4);
+    px(ctx, x + 6, y + 6, P["3"], w - 24, 1);
+    px(ctx, x + 6, y + 10, P["3"], w - 34, 1);
+    px(ctx, x + 6, y + 14, P["3"], w - 18, 1);
+    px(ctx, x + w - 18, y + 6, P["3"], 2, 2);
+    px(ctx, x + w - 14, y + 10, P["3"], 6, 1);
+  }
+
+  function drawWhiteboard(ctx, x, y, w, h) {
+    px(ctx, x, y, P["0"], w, h);
+    px(ctx, x + 2, y + 2, P["4"], w - 4, h - 4);
+    px(ctx, x + 6, y + 6, P["2"], w - 20, 1);
+    px(ctx, x + 6, y + 10, P["2"], w - 32, 1);
+    px(ctx, x + w - 18, y + 6, P["2"], 2, 2);
+    px(ctx, x + w - 14, y + 10, P["2"], 6, 1);
+  }
+
+  function drawPoster(ctx, x, y) {
+    px(ctx, x, y, P["0"], 32, 24);
+    px(ctx, x + 1, y + 1, P["3"], 30, 22);
+    px(ctx, x + 4, y + 4, P["2"], 24, 2);
+    px(ctx, x + 4, y + 8, P["2"], 16, 2);
+    px(ctx, x + 10, y + 13, P["1"], 12, 7);
+    px(ctx, x + 13, y + 15, P["4"], 2, 2);
+    px(ctx, x + 18, y + 15, P["4"], 2, 2);
+  }
+
+  function drawInteriorWallArt(ctx, theme) {
+    if (theme === "home") {
+      drawWindow(ctx, 2 * T, 8);
+      drawWindow(ctx, 6 * T, 8);
+    } else if (theme === "guild") {
+      drawBanner(ctx, 2 * T, 4);
+      drawBanner(ctx, 104, 4);
+    } else if (theme === "study") {
+      drawChalkboard(ctx, 2 * T, 6, 96, 20);
+    } else if (theme === "lab") {
+      drawWhiteboard(ctx, 2 * T, 6, 96, 20);
+    } else if (theme === "lounge") {
+      drawPoster(ctx, 40, 6);
+      drawWindow(ctx, 6 * T, 8);
+    }
+  }
+
+  function drawInteriorProp(ctx, type, x, y, w, h, time) {
+    if (type === "desk") drawDesk(ctx, x, y);
+    else if (type === "shelf") drawBookshelf(ctx, x, y);
+    else if (type === "table") drawTable(ctx, x, y);
+    else if (type === "longtable") drawLongTable(ctx, x, y, w);
+    else if (type === "plant") drawPlant(ctx, x, y);
+    else if (type === "bed") drawBed(ctx, x, y);
+    else if (type === "cabinet") drawCabinet(ctx, x, y);
+    else if (type === "tv") drawTV(ctx, x, y);
+    else if (type === "server") drawServer(ctx, x, y, time);
+    else if (type === "console") drawConsole(ctx, x, y);
+    else if (type === "crate") drawCrate(ctx, x, y);
+    else if (type === "sofa") drawSofa(ctx, x, y);
+    else if (type === "skateboard") drawSkateboard(ctx, x, y);
+    else if (type === "globe") drawGlobe(ctx, x, y);
+  }
+
   function drawAvatar(canvas, kind) {
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, 16, 16);
@@ -488,6 +718,7 @@ window.Art = (function () {
     drawTree, drawFence, drawSign,
     drawBuilding, drawPlayer, drawNpc,
     drawInteriorFloor, drawInteriorWall, drawInteriorDoor,
+    drawInteriorWallArt, drawInteriorProp,
     drawRug, drawDesk, drawBookshelf, drawTable, drawPlant,
     drawWindow, drawAvatar
   };

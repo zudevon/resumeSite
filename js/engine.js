@@ -98,25 +98,84 @@ window.Engine = (function () {
     };
   }
 
+  const INTERIOR_THEMES = {
+    about: "home",
+    professional: "guild",
+    collegiate: "study",
+    ai: "lab",
+    life: "lounge"
+  };
+
+  const INTERIOR_LAYOUTS = {
+    home: {
+      rug: { x: 3, y: 5, w: 4, h: 2 },
+      props: [
+        { type: "bed", x: 1, y: 2, w: 2, h: 2 },
+        { type: "desk", x: 6, y: 2, w: 2, h: 2, read: true },
+        { type: "table", x: 4, y: 4, w: 2, h: 1 },
+        { type: "tv", x: 6, y: 6, w: 2, h: 2 },
+        { type: "plant", x: 8, y: 6, w: 1, h: 1 }
+      ]
+    },
+    guild: {
+      rug: { x: 3, y: 5, w: 4, h: 2 },
+      props: [
+        { type: "desk", x: 1, y: 2, w: 2, h: 2, read: true },
+        { type: "cabinet", x: 7, y: 2, w: 2, h: 2 },
+        { type: "longtable", x: 4, y: 4, w: 3, h: 1 },
+        { type: "plant", x: 8, y: 6, w: 1, h: 1 }
+      ]
+    },
+    study: {
+      rug: { x: 3, y: 5, w: 4, h: 2 },
+      props: [
+        { type: "shelf", x: 1, y: 2, w: 2, h: 2, read: true },
+        { type: "shelf", x: 7, y: 2, w: 2, h: 2 },
+        { type: "table", x: 4, y: 4, w: 2, h: 1 },
+        { type: "globe", x: 8, y: 6, w: 1, h: 1 }
+      ]
+    },
+    lab: {
+      rug: { x: 3, y: 5, w: 4, h: 2 },
+      props: [
+        { type: "server", x: 1, y: 2, w: 2, h: 2, read: true },
+        { type: "server", x: 7, y: 2, w: 2, h: 2, read: true },
+        { type: "console", x: 4, y: 4, w: 2, h: 1, read: true },
+        { type: "crate", x: 8, y: 6, w: 1, h: 1 }
+      ]
+    },
+    lounge: {
+      rug: { x: 3, y: 5, w: 4, h: 2 },
+      props: [
+        { type: "sofa", x: 1, y: 3, w: 3, h: 2 },
+        { type: "tv", x: 7, y: 2, w: 2, h: 2 },
+        { type: "table", x: 5, y: 4, w: 2, h: 1 },
+        { type: "skateboard", x: 8, y: 6, w: 1, h: 2 },
+        { type: "plant", x: 1, y: 6, w: 1, h: 1 }
+      ]
+    }
+  };
+
   function makeInterior(building) {
     const W = 10, H = 9;
     const g = grid(W, H, "#");
     rect(g, 1, 2, 8, 6, ".");
     g[8][4] = "D";
 
+    const theme = INTERIOR_THEMES[building.section] || "home";
+    const layout = INTERIOR_LAYOUTS[theme];
+
     return {
       kind: "interior",
       w: W, h: H, tiles: g,
       building: building,
+      theme: theme,
+      rug: layout.rug,
+      props: layout.props,
       door: { x: 4, y: 8 },
       spawn: { x: 4, y: 7 },
       guide: { x: 3, y: 5 },
-      solids: [
-        { x: 1, y: 2, w: 2, h: 2, type: "pc" },
-        { x: 7, y: 2, w: 2, h: 2, type: "shelf" },
-        { x: 4, y: 4, w: 2, h: 1, type: "table" },
-        { x: 8, y: 6, w: 1, h: 1, type: "plant" }
-      ]
+      solids: layout.props.filter(function (p) { return p.solid !== false; })
     };
   }
 
@@ -275,7 +334,7 @@ window.Engine = (function () {
     if (g && f.x === g.x && f.y === g.y) return "TALK";
 
     const s = interiorSolidAt(f.x, f.y);
-    if (s && (s.type === "pc" || s.type === "shelf")) return "READ";
+    if (s && s.read) return "READ";
     return null;
   }
 
@@ -334,7 +393,7 @@ window.Engine = (function () {
     }
 
     const s = interiorSolidAt(f.x, f.y);
-    if (s && (s.type === "pc" || s.type === "shelf")) {
+    if (s && s.read) {
       state.locked = true;
       if (hooks.onInteract) hooks.onInteract({ type: s.type, section: b.section, building: b });
     }
@@ -473,7 +532,7 @@ window.Engine = (function () {
     for (let y = 0; y < map.h; y++) {
       for (let x = 0; x < map.w; x++) {
         if (map.tiles[y][x] !== "#" && map.tiles[y][x] !== "D") {
-          Art.drawInteriorFloor(ctx, x * T, y * T);
+          Art.drawInteriorFloor(ctx, x * T, y * T, map.theme);
         }
       }
     }
@@ -485,20 +544,24 @@ window.Engine = (function () {
       }
     }
 
-    // windows on the top wall
-    Art.drawWindow(ctx, 2 * T, 8);
-    Art.drawWindow(ctx, 6 * T, 8);
+    // theme-specific wall art
+    Art.drawInteriorWallArt(ctx, map.theme);
 
     // rug
-    Art.drawRug(ctx, 3 * T, 5 * T, 4 * T, 2 * T);
+    const rug = map.rug;
+    Art.drawRug(ctx, rug.x * T, rug.y * T, rug.w * T, rug.h * T, map.theme);
 
-    // depth-sorted furniture, guide, player, and door wall
+    // depth-sorted props, guide, player, and door wall
     const items = [];
 
-    items.push({ baseY: 2 * T + 24, draw: function () { Art.drawDesk(ctx, 1 * T, 2 * T); } });
-    items.push({ baseY: 2 * T + 32, draw: function () { Art.drawBookshelf(ctx, 7 * T, 2 * T); } });
-    items.push({ baseY: 4 * T + 16, draw: function () { Art.drawTable(ctx, 4 * T, 4 * T); } });
-    items.push({ baseY: 6 * T + 16, draw: function () { Art.drawPlant(ctx, 8 * T, 6 * T); } });
+    map.props.forEach(function (p) {
+      items.push({
+        baseY: (p.y + p.h) * T,
+        draw: function () {
+          Art.drawInteriorProp(ctx, p.type, p.x * T, p.y * T, p.w * T, p.h * T, state.time);
+        }
+      });
+    });
 
     const g = map.guide;
     items.push({
