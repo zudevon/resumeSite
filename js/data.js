@@ -74,8 +74,7 @@ window.RESUME_DATA = {
       bullets: [
         "Scaled a real-time anomaly-detection platform from 5 to 300+ pipelines (1,500+ metrics), cutting processing time from 15 to 3 minutes.",
         "Productionized ensemble unsupervised models on Kubernetes with configuration-driven pods, raising onboarding capacity to 40+ pipelines per week.",
-        "Built a self-service onboarding interface with automated config generation and resource right-sizing, eliminating 20–30 hours of manual onboarding weekly.",
-        "Shipped a RAG-based Slack support assistant that resolved ~80% of ~50 weekly queries without human intervention."
+        "Built a self-service onboarding interface with automated config generation and resource right-sizing, eliminating 20–30 hours of manual onboarding weekly."
       ]
     },
     {
@@ -186,7 +185,7 @@ window.RESUME_DATA = {
   /* ── the current AI chapter, curated for the Lab ── */
   ai: {
     summary:
-      "I build agentic AI systems end to end — retrieval pipelines, MCP tool servers, multi-step agents, and fine-tuned, self-hosted open-weight models. Recent work spans a “Company Brain” knowledge system, production LLM agents at SciPlay, and a RAG Slack assistant at Apple.",
+      "I build agentic AI systems end to end — retrieval pipelines, MCP tool servers, multi-step agents, and fine-tuned, self-hosted open-weight models. Recent work spans a “Company Brain” knowledge system and production LLM agents at SciPlay.",
     stack: ["RAG", "Agentic workflows", "MCP", "LoRA / QLoRA", "Vector DBs", "LangChain", "Hugging Face", "OpenAI", "Supabase", "Databricks", "Kubernetes", "MLflow"],
     work: [
       {
@@ -209,16 +208,6 @@ window.RESUME_DATA = {
           "Architected LLM-powered agents and RAG systems, including a vector-database incident-triage interface integrating Jira and campaign data.",
           "Piloted MLOps tooling in MLflow and wired experiment-tracked models into downstream data pipelines.",
           "Applied prompt workflows and fine-tuning to anomaly detection, reducing false positives and analyst load."
-        ]
-      },
-      {
-        role: "RAG Support Assistant",
-        org: "Apple (contract)",
-        meta: "Remote",
-        dates: "2022 – 2024",
-        bullets: [
-          "Shipped a RAG-based Slack support assistant with a weekly-refreshed vector store and human-in-the-loop escalation.",
-          "Resolved ~80% of ~50 weekly queries without human intervention."
         ]
       }
     ]
