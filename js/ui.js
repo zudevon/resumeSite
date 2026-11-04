@@ -24,6 +24,11 @@ window.UI = (function () {
 
   let resumeOpen = false;
 
+  let mapOpen = false;
+  let mapLastFocus = null;
+  let mapResumeActive = false;
+  let mapResumePaused = false;
+
   /* ───────────────────────── helpers ───────────────────────── */
 
   function esc(value) {
@@ -450,6 +455,227 @@ window.UI = (function () {
     }
   }
 
+  /* ───────────────────────── town map ───────────────────────── */
+
+  const SECTION_LABELS = {
+    about: "Trainer Card / About",
+    professional: "Professional Résumé",
+    collegiate: "Collegiate Résumé",
+    ai: "AI Experience",
+    life: "Life & Hobbies"
+  };
+
+  function buildMapLegend() {
+    if (!els.mapLegend) return;
+
+    let html = "<ul>";
+    DATA.world.buildings.forEach(function (b, i) {
+      html += '<li><span class="map-num">' + (i + 1) + "</span><span><b>" +
+        esc(b.name) + '</b><span class="map-desc"> — ' +
+        esc(SECTION_LABELS[b.section] || b.section) + "</span></span></li>";
+    });
+    html += '<li><span class="map-num">6</span><span><b>Memorial</b><span class="map-desc"> — Spiderman the pug</span></span></li>';
+    html += '<li><span class="map-key player"></span><span>You are here</span></li>';
+    html += '<li><span class="map-key girls"></span><span>Scooter girls</span></li>';
+    html += "</ul>";
+
+    els.mapLegend.innerHTML = html;
+  }
+
+  function drawMap() {
+    if (!els.mapCanvas || !window.Engine || !Engine.state || !Engine.state.overworld) return;
+
+    const canvas = els.mapCanvas;
+    const g = canvas.getContext("2d");
+    const map = Engine.state.overworld;
+    const S = 8;
+
+    const C = {
+      grass: "#2b6fa8",
+      grassLight: "#3f8fd2",
+      path: "#7fc4ea",
+      water: "#0d3358",
+      waterLight: "#2b6fa8",
+      tree: "#0d3358",
+      dirt: "#1a4a78",
+      building: "#061426",
+      edge: "#7fc4ea",
+      white: "#d9f2ff",
+      ink: "#061426",
+      light: "#7fc4ea",
+      dark: "#0d3358"
+    };
+
+    g.imageSmoothingEnabled = false;
+    g.fillStyle = C.grass;
+    g.fillRect(0, 0, canvas.width, canvas.height);
+
+    for (let y = 0; y < map.h; y++) {
+      for (let x = 0; x < map.w; x++) {
+        const ch = map.tiles[y][x];
+        const px = x * S;
+        const py = y * S;
+
+        if (ch === "T") {
+          g.fillStyle = C.tree;
+          g.fillRect(px, py, S, S);
+          g.fillStyle = C.grassLight;
+          g.fillRect(px + 2, py + 1, 2, 1);
+        } else if (ch === "~") {
+          g.fillStyle = C.water;
+          g.fillRect(px, py, S, S);
+          g.fillStyle = C.waterLight;
+          g.fillRect(px + 1, py + 4, S - 2, 1);
+        } else if (ch === "=") {
+          g.fillStyle = C.path;
+          g.fillRect(px, py, S, S);
+        } else if (ch === "d" || ch === "M") {
+          g.fillStyle = C.dirt;
+          g.fillRect(px, py, S, S);
+        } else if (ch === ",") {
+          g.fillStyle = C.grass;
+          g.fillRect(px, py, S, S);
+          g.fillStyle = C.light;
+          g.fillRect(px + 3, py + 3, 2, 2);
+        } else if (ch === "f") {
+          g.fillStyle = C.dark;
+          g.fillRect(px, py, S, S);
+        } else if (ch === "S") {
+          g.fillStyle = C.white;
+          g.fillRect(px + 2, py + 2, 4, 4);
+          g.fillStyle = C.ink;
+          g.fillRect(px + 3, py + 3, 2, 2);
+        } else {
+          g.fillStyle = C.grass;
+          g.fillRect(px, py, S, S);
+        }
+      }
+    }
+
+    const current = Engine.state.currentBuilding;
+
+    map.buildings.forEach(function (b, i) {
+      const bx = b.x * S;
+      const by = b.y * S;
+      const bw = b.w * S;
+      const bh = b.h * S;
+
+      g.fillStyle = C.building;
+      g.fillRect(bx, by, bw, bh);
+      g.strokeStyle = C.edge;
+      g.lineWidth = 1;
+      g.strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
+
+      if (current && current.id === b.id) {
+        g.strokeStyle = C.white;
+        g.lineWidth = 2;
+        g.strokeRect(bx + 1, by + 1, bw - 2, bh - 2);
+      }
+
+      g.fillStyle = C.white;
+      g.font = "bold 9px monospace";
+      g.textAlign = "center";
+      g.textBaseline = "middle";
+      g.fillText(String(i + 1), bx + bw / 2, by + bh / 2);
+    });
+
+    if (map.tiles[16] && map.tiles[16][7] === "M") {
+      const mx = 7 * S;
+      const my = 16 * S;
+      g.fillStyle = C.white;
+      g.fillRect(mx + 2, my + 1, 4, 6);
+      g.fillStyle = C.ink;
+      g.fillRect(mx + 3, my + 2, 2, 4);
+      g.fillStyle = C.white;
+      g.font = "bold 7px monospace";
+      g.textAlign = "center";
+      g.textBaseline = "top";
+      g.fillText("6", mx + S / 2, my + S + 1);
+    }
+
+    (map.npcs || []).forEach(function (n) {
+      const nx = Math.round(n.x / 16) * S;
+      const ny = Math.round(n.y / 16) * S;
+      g.fillStyle = C.light;
+      g.fillRect(nx + 2, ny + 2, 4, 4);
+      g.strokeStyle = C.ink;
+      g.lineWidth = 1;
+      g.strokeRect(nx + 2.5, ny + 2.5, 3, 3);
+    });
+
+    let px;
+    let py;
+    if (Engine.state.mode === "interior" && current) {
+      px = current.door.x * S;
+      py = current.door.y * S;
+    } else {
+      px = Math.round(Engine.state.player.x / 16) * S;
+      py = Math.round(Engine.state.player.y / 16) * S;
+    }
+    g.fillStyle = C.white;
+    g.fillRect(px + 1, py + 1, 6, 6);
+    g.fillStyle = C.ink;
+    g.fillRect(px + 3, py + 3, 2, 2);
+
+    g.fillStyle = C.white;
+    g.font = "bold 7px monospace";
+    g.textAlign = "right";
+    g.textBaseline = "top";
+    g.fillText("N", canvas.width - 4, 3);
+  }
+
+  function openMap() {
+    if (mapOpen) return;
+    if (resumeOpen || panelOpen || dialogueOpen) return;
+    if (!window.Engine || !Engine.state || !Engine.state.overworld) return;
+    if (Engine.state.locked) return;
+
+    mapOpen = true;
+    mapLastFocus = document.activeElement;
+    mapResumeActive = Engine.state.active;
+    mapResumePaused = Engine.state.paused;
+
+    drawMap();
+    els.townMap.hidden = false;
+    if (els.mapBtn) els.mapBtn.setAttribute("aria-pressed", "true");
+    window.addEventListener("keydown", onMapKey);
+    Engine.setPaused(true);
+    sfx("confirm");
+
+    try { els.mapClose.focus({ preventScroll: true }); } catch (e) { /* ignore */ }
+  }
+
+  function closeMap() {
+    if (!mapOpen) return;
+    mapOpen = false;
+    els.townMap.hidden = true;
+    if (els.mapBtn) els.mapBtn.setAttribute("aria-pressed", "false");
+    window.removeEventListener("keydown", onMapKey);
+
+    Engine.setActive(mapResumeActive);
+    Engine.setPaused(mapResumePaused);
+    sfx("cancel");
+
+    if (mapLastFocus && document.contains(mapLastFocus)) {
+      try { mapLastFocus.focus({ preventScroll: true }); } catch (e) { /* ignore */ }
+    } else {
+      focusGame();
+    }
+  }
+
+  function onMapKey(e) {
+    if (!mapOpen) return;
+    if (e.key === "Escape" || e.key === "m" || e.key === "M" ||
+        e.key === "x" || e.key === "X" || e.key === "Backspace") {
+      e.preventDefault();
+      closeMap();
+      return;
+    }
+    if (e.key.indexOf("Arrow") === 0 || e.key === "PageUp" || e.key === "PageDown" || e.key === " ") {
+      e.preventDefault();
+    }
+  }
+
   /* ───────────────────────── standard résumé ───────────────────────── */
 
   function resumeEntry(entry) {
@@ -534,6 +760,7 @@ window.UI = (function () {
 
   function showResume() {
     if (resumeOpen) return;
+    if (mapOpen) closeMap();
     if (panelOpen) closePanel(false);
     if (dialogueOpen) finishDialogue(true);
 
@@ -611,9 +838,15 @@ window.UI = (function () {
     els.resumeContent = $("resumeContent");
     els.backToArcade = $("backToArcade");
     els.printBtn = $("printBtn");
+    els.mapBtn = $("mapBtn");
+    els.townMap = $("townMap");
+    els.mapClose = $("mapClose");
+    els.mapCanvas = $("mapCanvas");
+    els.mapLegend = $("mapLegend");
 
     setSound(readStore("devon-arcade-sound") === "1");
     buildResume();
+    buildMapLegend();
 
     if (els.startBtn) {
       els.startBtn.addEventListener("click", function () {
@@ -623,6 +856,17 @@ window.UI = (function () {
 
     if (els.soundBtn) {
       els.soundBtn.addEventListener("click", toggleSound);
+    }
+
+    if (els.mapBtn) {
+      els.mapBtn.addEventListener("click", function () {
+        if (mapOpen) closeMap();
+        else openMap();
+      });
+    }
+
+    if (els.mapClose) {
+      els.mapClose.addEventListener("click", function () { closeMap(); });
     }
 
     if (els.panelClose) {
@@ -656,9 +900,19 @@ window.UI = (function () {
         hideResume();
         return;
       }
-      if (e.key === "m" || e.key === "M") {
-        const tag = (e.target && e.target.tagName || "").toLowerCase();
-        if (tag !== "input" && tag !== "textarea") toggleSound();
+      const tag = (e.target && e.target.tagName || "").toLowerCase();
+      const inField = tag === "input" || tag === "textarea";
+
+      if (!inField && (e.key === "m" || e.key === "M")) {
+        e.preventDefault();
+        if (mapOpen) closeMap();
+        else openMap();
+        return;
+      }
+
+      if (!inField && (e.key === "q" || e.key === "Q")) {
+        e.preventDefault();
+        toggleSound();
       }
     });
   }
@@ -675,8 +929,10 @@ window.UI = (function () {
     fadeTransition,
     sfx, toggleSound, setSound,
     handleHash,
+    openMap, closeMap,
     isResumeOpen: function () { return resumeOpen; },
     isPanelOpen: function () { return panelOpen; },
-    isDialogueOpen: function () { return dialogueOpen; }
+    isDialogueOpen: function () { return dialogueOpen; },
+    isMapOpen: function () { return mapOpen; }
   };
 })();

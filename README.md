@@ -7,9 +7,14 @@ A Pokémon-Blue-inspired résumé: a small top-down town where every building is
 - **Arrow keys / WASD** — walk
 - **Enter / Space / Z** — interact
 - **Esc / X** — back
-- **M** — toggle sound
+- **M** — town map
+- **Q** — toggle sound
 
-Walk into a building's door to enter. Inside, talk to the guide or read the PC / bookshelf to open that section. **Standard Résumé** is always available in the top bar.
+Walk into a building's door to enter. Inside, talk to the guide or read a prop to open that section.
+
+Two girls on scooters patrol the paths — stand in their way to stop them, then press Enter to talk. The dirt patch beside your house has a memorial; press Enter to read it.
+
+The **town map** opens with `M` (or the MAP button in the top bar) and numbers every building. **Standard Résumé** is always available in the top bar.
 
 ## Local preview
 
@@ -25,6 +30,8 @@ Opening `index.html` directly also works, because the site uses classic scripts 
 All résumé copy lives in `js/data.js`. That is the single source of truth for the game panels, the standard résumé view, and the printable version. Updating content there updates every view.
 
 - `world.buildings` maps each building to a résumé section and door tile.
+- `world.npcs` defines the two scooter girls, their patrol routes, and their dialogue.
+- `world.memorial` is the tombstone text.
 - `collegiate.projects`, `collegiate.coursework`, and `collegiate.activities` are ready for more content.
 - `ai.work` and `ai.stack` drive the Lab.
 

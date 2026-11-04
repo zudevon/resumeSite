@@ -24,6 +24,7 @@
     <div class="brand"><span class="brand-dot" aria-hidden="true"></span> DEVON'S RÉSUMÉ</div>
     <div class="top-actions">
       <button id="soundBtn" class="pixel-btn tiny" aria-pressed="false">SOUND: OFF</button>
+      <button id="mapBtn" class="pixel-btn tiny" aria-pressed="false">MAP (M)</button>
       <a href="#resume" class="pixel-btn tiny" id="resumeBtn">STANDARD RÉSUMÉ</a>
     </div>
   </header>
@@ -47,7 +48,7 @@
             <h1 class="title-logo">RÉSUMÉ</h1>
             <p class="title-sub">A TRAINER'S JOURNEY<br>THROUGH DATA &amp; AI</p>
             <button id="startBtn" class="pixel-btn big">PRESS START</button>
-            <p class="title-hint">ARROWS / WASD TO MOVE · ENTER TO INTERACT</p>
+            <p class="title-hint">ARROWS / WASD TO MOVE · ENTER TO INTERACT · M FOR MAP</p>
             <a href="#resume" class="title-link" id="titleResumeLink">SKIP TO STANDARD RÉSUMÉ &gt;&gt;</a>
           </div>
         </div>
@@ -75,6 +76,25 @@
           </div>
         </div>
 
+        <!-- town map -->
+        <div id="townMap" class="town-map" hidden role="dialog" aria-modal="true" aria-labelledby="mapTitle">
+          <div class="map-head">
+            <div>
+              <div class="map-kicker">PALLET TOWN</div>
+              <h2 id="mapTitle" class="map-title">TOWN MAP</h2>
+            </div>
+            <button id="mapClose" class="pixel-btn small" aria-label="Close map">X</button>
+          </div>
+          <div class="map-body">
+            <canvas id="mapCanvas" width="192" height="168" aria-label="Map of Pallet Town with numbered buildings"></canvas>
+            <div id="mapLegend" class="map-legend"></div>
+          </div>
+          <div class="map-foot">
+            <span>M / ESC - CLOSE</span>
+            <span>NUMBERED BUILDINGS</span>
+          </div>
+        </div>
+
         <!-- fade transition -->
         <div id="fade" class="fade" aria-hidden="true"></div>
       </div>
@@ -96,7 +116,7 @@
       </div>
     </div>
 
-    <p class="key-hint">ARROWS / WASD — MOVE · ENTER / SPACE — INTERACT · ESC — BACK · M — SOUND</p>
+    <p class="key-hint">ARROWS / WASD — MOVE · ENTER / SPACE — INTERACT · ESC — BACK · M — MAP · Q — SOUND</p>
   </main>
 
   <footer class="site-foot">

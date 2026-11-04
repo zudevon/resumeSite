@@ -13,7 +13,7 @@ window.Engine = (function () {
   const SIGN_TEXT =
     "PALLET TOWN — Trainer's hometown.\n" +
     "ARROWS / WASD: walk · ENTER: interact\n" +
-    "ESC: back · M: sound";
+    "M: town map · Q: sound";
 
   let canvas, ctx, data, hooks = {};
   let overworld = null;
@@ -84,9 +84,14 @@ window.Engine = (function () {
 
     // tree clusters
     [[18, 2], [19, 2], [20, 2], [18, 3], [20, 3], [19, 4],
-     [12, 16], [13, 16], [14, 16], [12, 17], [14, 17],
-     [7, 15], [8, 15], [7, 16]]
+     [12, 16], [13, 16], [14, 16], [12, 17], [14, 17]]
       .forEach(function (p) { if (g[p[1]][p[0]] === ".") g[p[1]][p[0]] = "T"; });
+
+    // memorial garden: a dirt patch beside the player's house
+    rect(g, 6, 15, 3, 3, "d");
+    g[16][7] = "M";
+    if (g[14][6] === ".") g[14][6] = ",";
+    if (g[14][8] === ".") g[14][8] = ",";
 
     // town sign
     g[11][11] = "S";
@@ -94,7 +99,30 @@ window.Engine = (function () {
     return {
       kind: "overworld",
       w: W, h: H, tiles: g,
-      buildings: data.world.buildings
+      buildings: data.world.buildings,
+      npcs: (data.world.npcs || []).map(function (n) {
+        return {
+          id: n.id,
+          name: n.name,
+          lines: n.lines,
+          variant: n.variant,
+          minX: n.minX,
+          maxX: n.maxX,
+          speed: n.speed,
+          x: n.x * T,
+          y: n.y * T,
+          fromX: n.x * T,
+          fromY: n.y * T,
+          toX: n.x * T,
+          toY: n.y * T,
+          dir: n.dir || "right",
+          moving: false,
+          paused: false,
+          wait: 0,
+          t: 0,
+          duration: n.speed || 0.18
+        };
+      })
     };
   }
 
@@ -206,6 +234,35 @@ window.Engine = (function () {
     return null;
   }
 
+  function npcAt(x, y) {
+    if (state.map.kind !== "overworld" || !state.map.npcs) return null;
+    const list = state.map.npcs;
+    for (let i = 0; i < list.length; i++) {
+      const n = list[i];
+      if (Math.round(n.x / T) === x && Math.round(n.y / T) === y) return n;
+    }
+    return null;
+  }
+
+  function pauseNpc(n) {
+    if (!n) return;
+    n.paused = true;
+    n.moving = false;
+    n.t = 0;
+    n.wait = 0;
+    n.x = Math.round(n.x / T) * T;
+    n.y = Math.round(n.y / T) * T;
+    const p = state.player;
+    if (p.x < n.x) n.dir = "left";
+    else if (p.x > n.x) n.dir = "right";
+  }
+
+  function resumeNpc(n) {
+    if (!n) return;
+    n.paused = false;
+    n.wait = 0.2;
+  }
+
   function interiorSolidAt(x, y) {
     if (state.map.kind !== "interior") return null;
     const list = state.map.solids;
@@ -229,10 +286,12 @@ window.Engine = (function () {
       return true;
     }
 
-    if (ch === "T" || ch === "~" || ch === "f" || ch === "S") return false;
+    if (ch === "T" || ch === "~" || ch === "f" || ch === "S" || ch === "M") return false;
 
     const b = buildingAt(x, y);
     if (b) return b.door.x === x && b.door.y === y;
+
+    if (npcAt(x, y)) return false;
 
     return true;
   }
@@ -321,9 +380,11 @@ window.Engine = (function () {
     const f = frontTile();
 
     if (state.mode === "overworld") {
+      if (npcAt(f.x, f.y)) return "TALK";
       const b = doorAt(f.x, f.y);
       if (b) return "ENTER · " + b.name;
-      if (tileAt(f.x, f.y) === "S") return "READ";
+      const ch = tileAt(f.x, f.y);
+      if (ch === "S" || ch === "M") return "READ";
       return null;
     }
 
@@ -358,15 +419,29 @@ window.Engine = (function () {
 
     if (state.mode === "overworld") {
       const f = frontTile();
+
+      const npc = npcAt(f.x, f.y);
+      if (npc) {
+        pauseNpc(npc);
+        state.locked = true;
+        if (hooks.onInteract) hooks.onInteract({ type: "npc", npc: npc, section: null });
+        return;
+      }
+
       const b = doorAt(f.x, f.y);
       if (b) {
         state.locked = true;
         if (hooks.onDoor) hooks.onDoor(b);
         return;
       }
-      if (tileAt(f.x, f.y) === "S") {
+
+      const ch = tileAt(f.x, f.y);
+      if (ch === "S") {
         state.locked = true;
         if (hooks.onInteract) hooks.onInteract({ type: "sign", text: SIGN_TEXT });
+      } else if (ch === "M") {
+        state.locked = true;
+        if (hooks.onInteract) hooks.onInteract({ type: "tombstone", text: data.world.memorial });
       }
       return;
     }
@@ -405,6 +480,78 @@ window.Engine = (function () {
     if (hooks.onExit) hooks.onExit(state.currentBuilding);
   }
 
+  /* ───────────────────────── NPC patrol ───────────────────────── */
+
+  function updateNpcs(dt) {
+    if (state.mode !== "overworld") return;
+    const npcs = state.map.npcs;
+    if (!npcs) return;
+
+    const p = state.player;
+    const playerTile = {
+      x: Math.round(p.x / T),
+      y: Math.round(p.y / T)
+    };
+    const playerNext = p.moving
+      ? { x: Math.round(p.toX / T), y: Math.round(p.toY / T) }
+      : playerTile;
+
+    for (let i = 0; i < npcs.length; i++) {
+      const n = npcs[i];
+      if (n.paused) continue;
+
+      if (n.wait > 0) {
+        n.wait -= dt;
+        continue;
+      }
+
+      if (n.moving) {
+        n.t += dt;
+        const k = Math.min(1, n.t / n.duration);
+        n.x = n.fromX + (n.toX - n.fromX) * k;
+        n.y = n.fromY + (n.toY - n.fromY) * k;
+        if (k >= 1) {
+          n.x = n.toX;
+          n.y = n.toY;
+          n.moving = false;
+          n.t = 0;
+        }
+        continue;
+      }
+
+      const tx = Math.round(n.x / T);
+      const ty = Math.round(n.y / T);
+
+      if (n.dir === "right" && tx >= n.maxX) {
+        n.dir = "left";
+        n.wait = 0.45;
+        continue;
+      }
+      if (n.dir === "left" && tx <= n.minX) {
+        n.dir = "right";
+        n.wait = 0.45;
+        continue;
+      }
+
+      const nx = tx + (n.dir === "right" ? 1 : -1);
+
+      // Stand in a girl's path and she has to stop. Then you can talk.
+      if ((nx === playerTile.x && ty === playerTile.y) ||
+          (nx === playerNext.x && ty === playerNext.y)) {
+        n.wait = 0.1;
+        continue;
+      }
+
+      n.fromX = n.x;
+      n.fromY = n.y;
+      n.toX = nx * T;
+      n.toY = n.y;
+      n.t = 0;
+      n.moving = true;
+      n.duration = n.speed || 0.18;
+    }
+  }
+
   /* ───────────────────────── update ───────────────────────── */
 
   function update(dt) {
@@ -433,6 +580,7 @@ window.Engine = (function () {
       if (dir) tryStep(dir);
     }
 
+    updateNpcs(dt);
     updateCamera();
 
     if (actionQueued) {
@@ -477,6 +625,7 @@ window.Engine = (function () {
         else if (ch === ",") Art.drawFlower(ctx, px, py);
         else if (ch === "=") Art.drawPath(ctx, px, py);
         else if (ch === "~") Art.drawWater(ctx, px, py, state.waterFrame);
+        else if (ch === "d" || ch === "M") Art.drawDirt(ctx, px, py);
         else Art.drawGrass(ctx, px, py);
       }
     }
@@ -486,7 +635,7 @@ window.Engine = (function () {
     for (let y = y0; y <= y1; y++) {
       for (let x = x0; x <= x1; x++) {
         const ch = map.tiles[y][x];
-        if (ch !== "T" && ch !== "f" && ch !== "S") continue;
+        if (ch !== "T" && ch !== "f" && ch !== "S" && ch !== "M") continue;
         const px = x * T - cam.x;
         const py = y * T - cam.y;
         items.push({
@@ -494,7 +643,8 @@ window.Engine = (function () {
           draw: function () {
             if (ch === "T") Art.drawTree(ctx, px, py);
             else if (ch === "f") Art.drawFence(ctx, px, py);
-            else Art.drawSign(ctx, px, py);
+            else if (ch === "S") Art.drawSign(ctx, px, py);
+            else Art.drawTombstone(ctx, px, py);
           }
         });
       }
@@ -512,6 +662,23 @@ window.Engine = (function () {
         draw: function () { Art.drawBuilding(ctx, b, px, py); }
       });
     }
+
+    const npcs = map.npcs || [];
+    npcs.forEach(function (n) {
+      items.push({
+        baseY: n.y + T,
+        draw: function () {
+          Art.drawScooterGirl(
+            ctx,
+            Math.round(n.x - cam.x),
+            Math.round(n.y - cam.y),
+            n.dir,
+            n.moving ? Math.floor(state.time * 8) % 2 : 0,
+            n.variant
+          );
+        }
+      });
+    });
 
     const p = state.player;
     items.push({
@@ -680,6 +847,9 @@ window.Engine = (function () {
       // An interaction sets `locked` so the player cannot walk away while
       // a dialogue or panel is opening. Closing that UI releases it.
       state.locked = false;
+      if (state.overworld && state.overworld.npcs) {
+        state.overworld.npcs.forEach(function (n) { n.paused = false; });
+      }
       clearHeld();
       updatePrompt();
     }
@@ -773,6 +943,13 @@ window.Engine = (function () {
     hooks = engineHooks || {};
     overworld = makeOverworld();
     state.map = overworld;
+    state.overworld = overworld;
+
+    const spawn = data.world.spawn;
+    state.player.x = spawn.x * T;
+    state.player.y = spawn.y * T;
+    state.player.dir = spawn.dir || "up";
+    updateCamera();
 
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
@@ -785,6 +962,7 @@ window.Engine = (function () {
   return {
     init, startOverworld, enterInterior, exitInterior,
     setActive, setPaused, unlock,
+    resumeNpc,
     pressDir, releaseDir, pressAction, pressCancel,
     state: state,
     SIGN_TEXT: SIGN_TEXT

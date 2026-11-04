@@ -265,6 +265,23 @@ window.RESUME_DATA = {
   world: {
     townName: "PALLET TOWN",
     spawn: { x: 3, y: 18, dir: "up" },
+    memorial: "R.I.P. Spiderman, our family pug.",
+    npcs: [
+      {
+        id: "nezuko",
+        name: "SCOOTER GIRL",
+        lines: ["I'm Nezuko from Demon Slayer!"],
+        x: 6, y: 12, minX: 2, maxX: 21,
+        dir: "right", speed: 0.18, variant: "a"
+      },
+      {
+        id: "cat",
+        name: "SCOOTER GIRL",
+        lines: ["I am a cat. Meow."],
+        x: 18, y: 18, minX: 2, maxX: 21,
+        dir: "left", speed: 0.16, variant: "b"
+      }
+    ],
     buildings: [
       {
         id: "home",

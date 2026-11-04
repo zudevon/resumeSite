@@ -119,9 +119,21 @@
         return;
       }
 
+      if (payload.type === "tombstone") {
+        UI.dialogue("MEMORIAL", [payload.text], function () {
+          Engine.setPaused(false);
+        });
+        return;
+      }
+
       if (payload.type === "npc") {
         UI.dialogue(payload.npc.name, payload.npc.lines, function () {
-          UI.openPanel(payload.section);
+          if (payload.section) {
+            UI.openPanel(payload.section);
+          } else {
+            Engine.resumeNpc(payload.npc);
+            Engine.setPaused(false);
+          }
         });
         return;
       }

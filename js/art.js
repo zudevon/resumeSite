@@ -83,6 +83,15 @@ window.Art = (function () {
     px(ctx, x, y, P["2"], T, 1);
   }
 
+  function drawDirt(ctx, x, y) {
+    px(ctx, x, y, P["1"], T, T);
+    const h = hash(x + 31, y + 17);
+    px(ctx, x + 2 + (h % 10), y + 3 + ((h >> 3) % 9), P["2"], 2, 1);
+    px(ctx, x + 5 + ((h >> 4) % 8), y + 9 + ((h >> 5) % 5), P["3"]);
+    px(ctx, x + 3 + ((h >> 6) % 9), y + 12 + ((h >> 7) % 3), P["2"]);
+    if (h % 3 === 0) px(ctx, x + 1, y + 1, P["2"], 2, 2);
+  }
+
   /* ───────────────────────── tall props ───────────────────────── */
 
   function drawTree(ctx, x, y) {
@@ -128,6 +137,20 @@ window.Art = (function () {
     px(ctx, x + 3, y + 7, P["0"], 7, 1);
   }
 
+  function drawTombstone(ctx, x, y) {
+    px(ctx, x + 4, y + 2, P["0"], 8, 12);
+    px(ctx, x + 5, y + 3, P["4"], 6, 10);
+    px(ctx, x + 5, y + 1, P["0"], 6, 2);
+    px(ctx, x + 6, y + 1, P["4"], 4, 1);
+    px(ctx, x + 7, y + 5, P["1"], 2, 1);
+    px(ctx, x + 7, y + 7, P["1"], 2, 1);
+    px(ctx, x + 6, y + 9, P["1"], 4, 1);
+    px(ctx, x + 3, y + 13, P["0"], 10, 2);
+    px(ctx, x + 4, y + 13, P["2"], 8, 1);
+    px(ctx, x + 2, y + 14, P["3"]);
+    px(ctx, x + 13, y + 14, P["3"]);
+  }
+
   /* ───────────────────────── buildings ───────────────────────── */
 
   function drawWindow(ctx, x, y) {
@@ -138,10 +161,57 @@ window.Art = (function () {
     px(ctx, x - 1, y + 12, P["2"], 14, 1);
   }
 
-  function drawHouse(ctx, x, y, accent) {
-    const w = 64, h = 64;
+  function drawWallBase(ctx, x, y, wallTop) {
+    const wx = x + 4, wy = y + wallTop, ww = 56, wh = 64 - wallTop;
+    px(ctx, wx, wy, P["0"], ww, wh);
+    px(ctx, wx + 1, wy + 1, P["3"], ww - 2, wh - 2);
+    px(ctx, wx + 1, y + 59, P["2"], ww - 2, 2);
+  }
 
-    // stepped roof
+  function drawDoor(ctx, x, y, style) {
+    if (style === "double" || style === "glass") {
+      const glass = style === "glass";
+      px(ctx, x + 22, y + 46, P["0"], 20, 18);
+      px(ctx, x + 23, y + 47, glass ? P["4"] : P["1"], 18, 17);
+      px(ctx, x + 24, y + 49, glass ? P["3"] : P["2"], 7, 15);
+      px(ctx, x + 33, y + 49, glass ? P["3"] : P["2"], 7, 15);
+      px(ctx, x + 28, y + 55, P["4"]);
+      px(ctx, x + 35, y + 55, P["4"]);
+      if (glass) {
+        px(ctx, x + 31, y + 47, P["0"], 2, 17);
+        px(ctx, x + 23, y + 51, P["2"], 18, 1);
+      }
+      px(ctx, x + 22, y + 62, P["2"], 20, 2);
+      return;
+    }
+
+    px(ctx, x + 24, y + 46, P["0"], 16, 18);
+    px(ctx, x + 25, y + 47, P["1"], 14, 17);
+    px(ctx, x + 27, y + 49, P["2"], 10, 15);
+    px(ctx, x + 35, y + 55, P["4"]);
+    px(ctx, x + 22, y + 62, P["2"], 20, 2);
+  }
+
+  function drawTallWindow(ctx, x, y) {
+    px(ctx, x, y, P["0"], 8, 16);
+    px(ctx, x + 1, y + 1, P["4"], 6, 14);
+    px(ctx, x + 1, y + 6, P["1"], 6, 1);
+    px(ctx, x + 4, y + 1, P["1"], 1, 14);
+    px(ctx, x - 1, y + 16, P["2"], 10, 1);
+  }
+
+  function drawPictureWindow(ctx, x, y, w, h) {
+    px(ctx, x, y, P["0"], w, h);
+    px(ctx, x + 1, y + 1, P["4"], w - 2, h - 2);
+    px(ctx, x + 1, y + Math.floor(h / 2), P["1"], w - 2, 1);
+    px(ctx, x + Math.floor(w / 2), y + 1, P["1"], 1, h - 2);
+    px(ctx, x - 1, y + h, P["2"], w + 2, 1);
+  }
+
+  function drawHomeHouse(ctx, x, y) {
+    const w = 64;
+
+    // steep stepped roof
     for (let r = 0; r < 28; r++) {
       const inset = Math.max(0, 12 - Math.floor(r / 7) * 4);
       px(ctx, x + inset, y + r, P["1"], w - inset * 2, 1);
@@ -153,43 +223,148 @@ window.Art = (function () {
     px(ctx, x, y + 27, P["0"], w, 2);
     px(ctx, x + 2, y + 28, P["2"], w - 4, 1);
 
-    // walls
-    const wx = x + 4, wy = y + 29, ww = w - 8, wh = h - 29;
-    px(ctx, wx, wy, P["0"], ww, wh);
-    px(ctx, wx + 1, wy + 1, P["3"], ww - 2, wh - 2);
-    px(ctx, wx + 1, y + h - 5, P["2"], ww - 2, 2);
+    // chimney
+    px(ctx, x + 9, y + 4, P["0"], 8, 14);
+    px(ctx, x + 10, y + 5, P["1"], 6, 12);
+    px(ctx, x + 9, y + 4, P["3"], 8, 2);
 
-    // windows
+    drawWallBase(ctx, x, y, 29);
     drawWindow(ctx, x + 10, y + 36);
     drawWindow(ctx, x + 42, y + 36);
+    drawDoor(ctx, x, y, "single");
 
-    // door
-    px(ctx, x + 24, y + 46, P["0"], 16, 18);
-    px(ctx, x + 25, y + 47, P["1"], 14, 17);
-    px(ctx, x + 27, y + 49, P["2"], 10, 15);
-    px(ctx, x + 35, y + 55, P["4"]);
-    px(ctx, x + 22, y + 62, P["2"], 20, 2);
+    // flower boxes
+    px(ctx, x + 10, y + 48, P["2"], 12, 3);
+    px(ctx, x + 12, y + 48, P["4"]);
+    px(ctx, x + 17, y + 48, P["4"]);
+    px(ctx, x + 42, y + 48, P["2"], 12, 3);
+    px(ctx, x + 44, y + 48, P["4"]);
+    px(ctx, x + 49, y + 48, P["4"]);
 
-    if (accent === "center") {
-      px(ctx, x + 23, y + 33, P["0"], 18, 10);
-      px(ctx, x + 24, y + 34, P["4"], 16, 8);
-      px(ctx, x + 31, y + 35, P["2"], 2, 6);
-      px(ctx, x + 29, y + 37, P["2"], 6, 2);
-    } else if (accent === "guild") {
-      px(ctx, x + 26, y + 32, P["0"], 12, 9);
-      px(ctx, x + 27, y + 33, P["2"], 10, 7);
-      px(ctx, x + 29, y + 35, P["4"], 2, 1);
-      px(ctx, x + 31, y + 36, P["4"], 2, 1);
-      px(ctx, x + 33, y + 35, P["4"], 2, 1);
-    } else if (accent === "rival") {
-      px(ctx, x + 46, y + 3, P["0"], 8, 14);
-      px(ctx, x + 47, y + 4, P["1"], 6, 12);
-      px(ctx, x + 46, y + 3, P["3"], 8, 2);
-    } else if (accent === "home") {
-      px(ctx, x + 10, y + 48, P["2"], 12, 3);
-      px(ctx, x + 12, y + 48, P["4"]);
-      px(ctx, x + 17, y + 48, P["4"]);
+    // doormat
+    px(ctx, x + 26, y + 60, P["2"], 12, 2);
+  }
+
+  function drawGuildHouse(ctx, x, y) {
+    const w = 64;
+
+    // tall gable roof
+    for (let r = 0; r < 28; r++) {
+      const inset = Math.max(0, 24 - Math.floor(r * 0.9));
+      px(ctx, x + inset, y + r, P["1"], w - inset * 2, 1);
+      px(ctx, x + inset, y + r, P["0"], 1, 1);
+      px(ctx, x + w - inset - 1, y + r, P["0"], 1, 1);
+      if (r % 5 === 0) px(ctx, x + inset + 1, y + r, P["2"], w - inset * 2 - 2, 1);
     }
+    px(ctx, x, y + 27, P["0"], w, 2);
+    px(ctx, x + 2, y + 28, P["2"], w - 4, 1);
+
+    // pennant at the peak
+    px(ctx, x + 31, y + 1, P["0"], 2, 12);
+    px(ctx, x + 33, y + 2, P["2"], 7, 5);
+    px(ctx, x + 34, y + 3, P["4"], 4, 3);
+
+    drawWallBase(ctx, x, y, 29);
+
+    // stone base
+    px(ctx, x + 5, y + 60, P["2"], 54, 3);
+
+    // columns
+    for (let i = 0; i < 2; i++) {
+      const cx = i === 0 ? x + 4 : x + 56;
+      px(ctx, cx, y + 29, P["0"], 4, 31);
+      px(ctx, cx + 1, y + 30, P["4"], 2, 29);
+      px(ctx, cx, y + 29, P["2"], 4, 2);
+    }
+
+    drawTallWindow(ctx, x + 9, y + 34);
+    drawTallWindow(ctx, x + 47, y + 34);
+    drawDoor(ctx, x, y, "double");
+
+    // banner above the door
+    px(ctx, x + 26, y + 32, P["0"], 12, 9);
+    px(ctx, x + 27, y + 33, P["2"], 10, 7);
+    px(ctx, x + 29, y + 35, P["4"], 2, 1);
+    px(ctx, x + 31, y + 36, P["4"], 2, 1);
+    px(ctx, x + 33, y + 35, P["4"], 2, 1);
+  }
+
+  function drawRivalHouse(ctx, x, y) {
+    // flat roof + parapet
+    px(ctx, x + 2, y + 8, P["0"], 60, 16);
+    px(ctx, x + 3, y + 9, P["1"], 58, 14);
+    px(ctx, x + 2, y + 22, P["0"], 60, 4);
+    px(ctx, x + 4, y + 23, P["2"], 56, 2);
+
+    // satellite dish
+    px(ctx, x + 46, y + 1, P["0"], 2, 10);
+    px(ctx, x + 42, y + 1, P["2"], 9, 7);
+    px(ctx, x + 43, y + 2, P["4"], 7, 2);
+    px(ctx, x + 45, y + 8, P["1"], 2, 2);
+
+    drawWallBase(ctx, x, y, 26);
+
+    drawPictureWindow(ctx, x + 7, y + 33, 22, 12);
+    drawWindow(ctx, x + 44, y + 34);
+
+    // cat silhouette in the picture window
+    px(ctx, x + 14, y + 40, P["1"], 6, 4);
+    px(ctx, x + 13, y + 38, P["1"], 2, 2);
+    px(ctx, x + 19, y + 38, P["1"], 2, 2);
+
+    drawDoor(ctx, x, y, "single");
+
+    // cat flap
+    px(ctx, x + 29, y + 59, P["0"], 6, 4);
+  }
+
+  function drawCenterHouse(ctx, x, y) {
+    const w = 64;
+
+    // wide low roof
+    for (let r = 0; r < 26; r++) {
+      const inset = Math.max(0, 12 - Math.floor(r / 9) * 6);
+      px(ctx, x + inset, y + r, P["1"], w - inset * 2, 1);
+      px(ctx, x + inset, y + r, P["0"], 1, 1);
+      px(ctx, x + w - inset - 1, y + r, P["0"], 1, 1);
+      if (r === 0) px(ctx, x + inset + 2, y, P["3"], w - inset * 2 - 4, 1);
+      else if (r % 7 === 0) px(ctx, x + inset + 1, y + r, P["2"], w - inset * 2 - 2, 1);
+    }
+    px(ctx, x, y + 25, P["0"], w, 2);
+    px(ctx, x + 2, y + 26, P["2"], w - 4, 1);
+
+    // cross on the roof peak
+    px(ctx, x + 31, y + 2, P["4"], 2, 7);
+    px(ctx, x + 29, y + 4, P["4"], 6, 2);
+
+    drawWallBase(ctx, x, y, 27);
+
+    // windows with awnings
+    drawWindow(ctx, x + 10, y + 36);
+    drawWindow(ctx, x + 42, y + 36);
+    for (let i = 0; i < 6; i++) {
+      px(ctx, x + 9 + i * 2, y + 33, i % 2 ? P["4"] : P["2"], 2, 3);
+      px(ctx, x + 41 + i * 2, y + 33, i % 2 ? P["4"] : P["2"], 2, 3);
+    }
+
+    // cross plate above the door
+    px(ctx, x + 23, y + 31, P["0"], 18, 10);
+    px(ctx, x + 24, y + 32, P["4"], 16, 8);
+    px(ctx, x + 31, y + 33, P["2"], 2, 6);
+    px(ctx, x + 29, y + 35, P["2"], 6, 2);
+
+    // glass double door + awning
+    drawDoor(ctx, x, y, "glass");
+    for (let i = 0; i < 12; i++) {
+      px(ctx, x + 20 + i * 2, y + 43, i % 2 ? P["4"] : P["2"], 2, 4);
+    }
+  }
+
+  function drawHouse(ctx, x, y, accent) {
+    if (accent === "guild") drawGuildHouse(ctx, x, y);
+    else if (accent === "rival") drawRivalHouse(ctx, x, y);
+    else if (accent === "center") drawCenterHouse(ctx, x, y);
+    else drawHomeHouse(ctx, x, y);
   }
 
   function drawLab(ctx, x, y) {
@@ -246,11 +421,7 @@ window.Art = (function () {
   }
 
   function drawCenter(ctx, x, y) {
-    drawHouse(ctx, x, y, "center");
-    // striped awning over the door
-    for (let i = 0; i < 12; i++) {
-      px(ctx, x + 20 + i * 2, y + 44, i % 2 ? P["4"] : P["2"], 2, 4);
-    }
+    drawCenterHouse(ctx, x, y);
   }
 
   function drawBuilding(ctx, building, x, y) {
@@ -398,6 +569,67 @@ window.Art = (function () {
   function drawNpc(ctx, x, y, kind) {
     const pal = Object.assign({}, P, NPC_PALETTES[kind] || {});
     drawSprite(ctx, PLAYER.down[0], x, y, false, pal);
+  }
+
+  function drawScooterGirl(ctx, x, y, dir, frame, variant) {
+    const flip = dir === "left";
+    const shirt = variant === "b" ? P["2"] : P["4"];
+    const helmet = variant === "b" ? P["4"] : P["2"];
+
+    function put(dx, dy, color, w, h) {
+      const ww = w || 1;
+      const hh = h || 1;
+      px(ctx, x + (flip ? 16 - dx - ww : dx), y + dy, color, ww, hh);
+    }
+
+    // wheels
+    put(1, 12, P["0"], 4, 4);
+    put(2, 13, P["3"], 2, 2);
+    put(11, 12, P["0"], 4, 4);
+    put(12, 13, P["3"], 2, 2);
+
+    // deck, stem, handlebar
+    put(3, 11, P["1"], 11, 2);
+    put(4, 11, P["2"], 9, 1);
+    put(13, 5, P["0"], 2, 7);
+    put(14, 6, P["2"], 1, 5);
+    put(11, 3, P["0"], 5, 2);
+    put(12, 3, P["3"], 3, 1);
+
+    // legs
+    put(7, 9, P["1"], 3, 2);
+    put(7, 10, P["0"], 3, 1);
+
+    // body
+    put(5, 5, shirt, 5, 4);
+    put(4, 5, P["0"], 1, 4);
+    put(10, 5, P["0"], 1, 4);
+    put(5, 4, P["0"], 5, 1);
+    put(5, 9, P["0"], 5, 1);
+
+    // arm reaching to the handlebar
+    put(9, 6, P["3"], 3, 1);
+    put(11, 5, P["3"], 2, 2);
+
+    // head and helmet
+    put(5, 1, helmet, 5, 2);
+    put(5, 3, P["3"], 5, 2);
+    put(8, 3, P["0"], 1, 1);
+    put(6, 1, P["4"], 2, 1);
+
+    // ponytail and a little motion streak
+    if (frame) {
+      put(2, 1, P["1"], 3, 4);
+      put(0, 11, P["2"], 2, 1);
+    } else {
+      put(3, 2, P["1"], 2, 3);
+    }
+
+    // cat ears for the cat girl
+    if (variant === "b") {
+      put(6, 0, P["4"], 2, 1);
+      put(9, 0, P["4"], 2, 1);
+    }
   }
 
   /* ───────────────────────── interior ───────────────────────── */
@@ -714,9 +946,9 @@ window.Art = (function () {
 
   return {
     P, T, PLAYER,
-    drawGrass, drawPath, drawFlower, drawWater,
-    drawTree, drawFence, drawSign,
-    drawBuilding, drawPlayer, drawNpc,
+    drawGrass, drawPath, drawFlower, drawWater, drawDirt,
+    drawTree, drawFence, drawSign, drawTombstone,
+    drawBuilding, drawPlayer, drawNpc, drawScooterGirl,
     drawInteriorFloor, drawInteriorWall, drawInteriorDoor,
     drawInteriorWallArt, drawInteriorProp,
     drawRug, drawDesk, drawBookshelf, drawTable, drawPlant,
